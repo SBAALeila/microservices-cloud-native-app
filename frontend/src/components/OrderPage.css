@@ -1,0 +1,65 @@
+.order-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 80vh;
+  background-color: #ffffff;
+}
+
+.order-container {
+  padding: 20px;
+  border: 1px solid rgba(9, 108, 165, 0.699);
+  border-radius: 8px;
+  background-color: rgb(255, 255, 255);
+  text-align: center;
+  margin-top: 10px;
+  backdrop-filter: blur(10px); /* Flou de l'arrière-plan */
+  box-shadow: 0 0 15px rgba(110, 117, 12, 0.4); /* Ombre de la boîte */
+}
+
+
+.order-title {
+  font-size: 24px;
+  color: #007bff;
+}
+
+.order-text {
+  margin-top: 10px;
+  color: rgb(0, 0, 0);
+}
+
+.order-id {
+  margin-top: 10px;
+  color: rgb(0, 0, 0);
+}
+
+.order-button {
+  margin-top: 20px;
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.order-button:hover {
+  background-color: #0056b3;
+}
+
+.order-button {
+  margin-top: 20px;
+  margin-right: 50px; /* Ajouter une marge à droite pour espacer les boutons */
+  padding: 10px 20px;
+  border: none;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: #fff;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.order-button:last-child {
+  margin-right: 0; /* Supprimer la marge à droite pour le dernier bouton */
+}

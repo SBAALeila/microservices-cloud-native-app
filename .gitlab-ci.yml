@@ -1,0 +1,199 @@
+image: docker:dind
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+services:
+  - docker:dind
+
+# Stages définis pour votre pipeline
+stages:
+  - build
+  - tests
+  - sast
+  - fix-vulnerabilities
+  - package
+
+# Cache global pour les dépendances Node.js et npm
+cache:
+  paths:
+    - frontend/node_modules/
+    - frontend/package-lock.json
+    - backend/order-service/node_modules/
+    - backend/order-service/package-lock.json/
+    - backend/product-service/node_modules/
+    - backend/product-service/package-lock.json/
+    - backend/payment-service/node_modules/
+    - backend/payment-service/package-lock.json/
+frontend-build:
+  stage: build
+  image: node:14
+  before_script:
+    - cd frontend
+    - npm install
+  script:
+    - npm run build
+  artifacts:
+    paths:
+      - frontend/node_modules/
+
+frontend-tests:
+  stage: tests
+  image: node:14
+  script:
+    - cd frontend
+    - npm install -g retire
+    - retire --outputformat json > frontend-security-report.json
+  allow_failure: true
+  artifacts:
+    paths:
+      - frontend/retire-report.json
+
+frontend-sast:
+  stage: sast
+  image: node:14
+  before_script:
+    - cd frontend
+    - npm install
+  script:
+    - npm audit  --json > frontend-security-report.json
+  allow_failure: true
+  artifacts:
+    paths:
+      - frontend-security-report.json
+
+npm-audit-fix-frontend:
+  stage: fix-vulnerabilities
+  image: node:14
+  before_script:
+    - cd frontend
+  script:
+    - npm install
+    - npm audit fix --forc
+order-service-build:
+  stage: build
+  image: node:14
+  before_script:
+    - cd backend/order-service
+    - npm install
+    - ls -l index.js
+  script:
+    - node index.js &
+    - sleep 5
+    - echo "Le conteneur est démarré avec succès!"
+  artifacts:
+    paths:
+      - backend/order-service/node_modules/
+docker-build-and-push-frontend:
+  stage: package
+  before_script:
+    - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
+  script:
+    - cd frontend
+    - docker build -t sbaaleila/frontend .
+    - docker push sbaaleila/frontend
+
+order-service-tests:
+  stage: tests
+  image: node:14
+  before_script:
+    - cd backend/order-service
+    - npm install
+  script:
+    - npm test
+payment-service-build:
+  stage: build
+  image: node:14
+  before_script:
+    - cd backend/payment-service
+    - npm install
+    - ls -l index.js
+  script:
+    - node index.js &
+    - sleep 5
+    - echo "Le conteneur est démarré avec succès!"
+  artifacts:
+    paths:
+      - backend/payment-service/node_modules/
+
+payment-service-tests:
+  stage: tests
+  image: node:14
+  before_script:
+    - cd backend/payment-service
+    - npm install
+  script:
+    - npm test
+product-service-build:
+  stage: build
+  image: node:14
+  before_script:
+    - cd backend/product-service
+    - npm install
+    - ls -l index.js
+  script:
+    - node index.js &
+    - sleep 5
+    - echo "Le conteneur est démarré avec succès!"
+  artifacts:
+    paths:
+      - backend/product-service/node_modules/
+
+product-service-tests:
+  stage: tests
+  image: node:14
+  before_script:
+    - cd backend/product-service
+    - npm install
+  script:
+    - npm test
+
+nodejsscan:
+  stage: sast
+  image: node:14
+  script:
+    - cd backend/order-service
+    - npm install
+    - npm audit --json > order-service-security-report.json
+
+    - cd backend/product-service
+    - npm install
+    - npm audit --json > product-service-security-report.json
+
+    - cd backend/payment-service
+    - npm install
+    - npm audit --json > payment-service-security-report.json
+  allow_failure: true
+  artifacts:
+    paths:
+      - order-service-security-report.json
+      - payment-service-security-report.json 
+      - product-service-security-report.json
+      
+npm-audit-fix:
+  stage: fix-vulnerabilities
+  image: node:14
+  before_script:
+    - cd backend/product-service
+  script:
+    - npm install
+    - npm audit fix
+
+
+docker-build-and-push:
+  stage: package
+  before_script:
+    - docker login -u $DOCKER_HUB_USER -p $DOCKER_HUB_PASSWORD
+  script:
+    - cd backend/order-service
+    - docker build -t sbaaleila/order-service .
+    - docker push sbaaleila/order-service
+
+  
+    - cd ../product-service
+    - docker build -t sbaaleila/product-service .
+    - docker push sbaaleila/product-service
+
+    - cd ../payment-service
+    - docker build -t sbaaleila/payment-service .
+    - docker push sbaaleila/payment-service
